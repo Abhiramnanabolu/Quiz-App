@@ -1,7 +1,10 @@
 .App {
   text-align: center;
 }
-
+.main-bg{
+  background-image: url("https://res.cloudinary.com/dbs6hvga4/image/upload/v1709037859/hhholographic_tgelao.jpg");
+  background-size: cover;
+}
 .App-logo {
   height: 40vmin;
   pointer-events: none;
