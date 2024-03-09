@@ -1,4 +1,5 @@
 import { Component } from "react";
+import {Link, withRouter} from 'react-router-dom'
 
 const gkList=[
     {
@@ -2042,54 +2043,167 @@ const gadgetList=[
   
 
 class Quiz extends Component{
-    state={Category:"",questions:[]}
+    state={Category:"",test:false,choosenClass:"",questions:[],currentQuestionIndex:0, showCorrectAnswer:false,score:0,choosenAnswer:""}
 
     componentDidMount=()=>{
         this.getBlogItemData()
     }
 
+    shuffleAndTakeUnique=(array, count)=>{
+      const shuffledArray = array.slice().sort(() => Math.random() - 0.5);
+      return [...new Set(shuffledArray)].slice(0, count);
+  }
+
     getBlogItemData = async () => {
         const { match } = this.props
         const { params } = match
         const { category } = params
+        let List=[]
         switch (category) {
             case "GeneralKnowledge":
-              this.setState({Category:category,questions:gkList})
+              this.setState({Category:category})
+              List=gkList
               break;
             case "Geography":
-                this.setState({Category:category,questions:geographyList})
+                this.setState({Category:category})
+                List=geographyList
                 break;
             case "Animals":
-                this.setState({Category:category,questions:animalsList})
+                this.setState({Category:category})
+                List=animalsList
                 break;
             case "Science&Nature":
-                this.setState({Category:category,questions:sandNatureList})
+                this.setState({Category:category})
+                List=sandNatureList
                 break;
             case "Computers":
-                this.setState({Category:category,questions:computerList})
+                this.setState({Category:category})
+                List=computerList
                 break;
             case "Mathematics":
-                this.setState({Category:category,questions:mathList})
+                this.setState({Category:category})
+                List=mathList
                 break;
             case "Gadgets":
-                this.setState({Category:category,questions:gadgetList})
+                this.setState({Category:category})
+                List=gadgetList
                 break;
             // Additional cases as needed
             default:
                 this.setState({Category:""})
           }
+          const randomObjects = this.shuffleAndTakeUnique(List, 10);
+          this.setState({questions:randomObjects})
+          console.log(randomObjects)
         
       }
 
+      handleOptionClick = (selectedOption) => {
+        this.setState({ choosenAnswer:selectedOption,choosenClass:"bg-sky-400"});
+      };
+    
+      handleSubmit = () => {
+        const { currentQuestionIndex, questions,choosenAnswer } = this.state;
+        if (questions[currentQuestionIndex].correct_answer === choosenAnswer){
+            console.log("Correct")
+            this.setState(prevState=>({score:prevState.score+1}));
+        }
+        else{
+          console.log("InCorrect")
+        }
+        this.setState({ showCorrectAnswer: true });
+      };
+    
+      handleNextQuestion = () => {
+        const { currentQuestionIndex, questions, showCorrectAnswer } = this.state;
+      
+        if (currentQuestionIndex < questions.length - 1) {
+          this.setState((prevState) => ({
+            currentQuestionIndex: prevState.currentQuestionIndex + 1,
+            showCorrectAnswer: false,
+          }));
+        } else {
+          // Handle end of quiz, e.g., display a summary or redirect to another page.
+          this.setState({test:false})
+          console.log("End of quiz");
+        }
+      };
+
+      onClickPlayAgain=(props)=>{
+        const {history} = props
+        history.push('/play')
+      }
+      
+
     render(){
-        const {questions}=this.state
+        const {questions,test,currentQuestionIndex,showCorrectAnswer,score,choosenClass,choosenAnswer}=this.state
         console.log(questions)
+        console.log(score)
+        const currentQuestion = questions[currentQuestionIndex];
+
+       
         return(
-            <div>
-                <h1>HIIIIII</h1>
+          <>
+          {test?
+          <>
+          {questions.length ===0?<p>Loading</p>:
+          <div className="font-[Poppins] w-screen h-screen">
+            <div className="bg-black w-full p-3 text-white flex justify-between">
+              <h1 className="font-[Titan One] font-semibold text-xl ml-5">TechTrivia</h1>
+              <h1>{`Score :  ${score} / 10`}</h1>
             </div>
+            <div className="p-4 pl-8 ">
+              <h2 className="font-semibold ttext-slate-600">Question {currentQuestionIndex + 1}</h2>
+              <p className="mt-4 font-semibold text-xl">{currentQuestion.question}</p>
+              <div className="flex flex-row w-80 mt-4 flex-wrap">
+                {currentQuestion.options.map((option, index) => (
+                  <>
+                  {choosenAnswer===option?<div key={index} className=" min-w-full bg-white m-1 rounded-lg">
+                  <div
+                    onClick={() => this.handleOptionClick(option)}
+                    disabled={showCorrectAnswer}
+                    className={`bg-black hover:bg-sky-700 hover:transition-all ${choosenClass} w-full text-white cursor-pointer p-3 rounded-lg`}
+                  >
+                    {option}
+                  </div>
+                </div>:<div key={index} className=" min-w-full bg-white m-1 rounded-lg">
+                <div
+                  onClick={() => this.handleOptionClick(option)}
+                  disabled={showCorrectAnswer}
+                  className={`bg-black hover:bg-sky-700 hover:transition-all w-full text-white cursor-pointer p-3 rounded-lg`}
+                >
+                  {option}
+                </div>
+              </div>}
+              </>
+                ))}
+              </div>
+              {showCorrectAnswer ?
+                <p className="mt-2 mb-2">Correct Answer: {currentQuestion.correct_answer}</p>
+              :<p>{test}</p>}
+      
+              {currentQuestionIndex <= questions.length - 1 ?
+                <button className="bg-sky-400 px-4 text-white py-1 mt-2 rounded" onClick={this.handleSubmit} disabled={showCorrectAnswer}>
+                Submit
+              </button>
+                :<p>{}</p>
+              }
+      
+              {showCorrectAnswer && (
+                <button onClick={this.handleNextQuestion} className="bg-sky-400 mt-2 ml-2 px-4 text-white py-1 rounded">
+                  Next Question
+                </button>
+              )}
+          </div>
+        </div>}
+        </>:<div className="w-screen h-screen flex flex-row justify-center bg-black items-center">
+          <div className="bg-white rounded-lg p-10 font-[Poppins] text-center">
+              <h1>{`Score :  ${score} / 10`}</h1>
+              <button onClick={this.onClickPlayAgain} className="bg-sky-400 mt-2 px-4 text-white py-1 rounded mt-8">Play Again !</button>
+          </div>
+        </div>}</>
         )
     }
 }
 
-export default Quiz
+export default withRouter(Quiz)
